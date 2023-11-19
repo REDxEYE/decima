@@ -100,4 +100,8 @@ public class BufferUtils {
             buffer.position(oldPosition);
         }
     }
+
+    public static ByteBuffer sliceOnCurrentPosition(@NotNull ByteBuffer buffer) {
+        return buffer.slice(buffer.position(), buffer.remaining()).order(buffer.order());
+    }
 }

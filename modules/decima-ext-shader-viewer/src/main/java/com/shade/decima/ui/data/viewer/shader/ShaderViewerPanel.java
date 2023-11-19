@@ -1,5 +1,6 @@
 package com.shade.decima.ui.data.viewer.shader;
 
+import com.red.dxbc.ShaderDecompiler;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.types.java.HwShader;
 import com.shade.decima.model.util.CloseableLibrary;
@@ -53,22 +54,41 @@ public class ShaderViewerPanel extends JComponent {
         }
     }
 
+    private interface DXCompiler extends CloseableLibrary {
+        int DxcCreateInstance(GUID rclsid, GUID riid, PointerByReference ppv);
+    }
+
+    private interface D3DCompiler extends CloseableLibrary {
+        int D3DDisassemble(byte[] srcBuf, int srcLen, int flags, String comments, PointerByReference disassembly);
+    }
+
     private static class ProgramPanel extends JComponent {
         public ProgramPanel(@NotNull HwShader.Entry entry) {
             final JTextArea area = new JTextArea("// No decompiled data");
             area.setFont(new Font(Font.MONOSPACED, area.getFont().getStyle(), area.getFont().getSize()));
             area.setEditable(false);
 
-            final JButton button = new JButton("Decompile");
-            button.setMnemonic('D');
-            button.addActionListener(e -> {
+            final JButton disassembleButton = new JButton("Disassemble");
+            disassembleButton.setMnemonic('D');
+            disassembleButton.addActionListener(e -> {
                 final String text = decompile(entry);
                 area.setText(text);
             });
 
-            setLayout(new MigLayout("ins panel,wrap", "[grow,fill]", "[grow,fill][]"));
-            add(new JScrollPane(area));
-            add(button);
+            final JCheckBox optimizeCheckBox = new JCheckBox("Optimize");
+            final JButton decompileButton = new JButton("Decompile");
+            decompileButton.setMnemonic('D');
+            decompileButton.addActionListener(e -> {
+                final ShaderDecompiler sd = new ShaderDecompiler(entry.program().blob());
+                final String text = sd.decompile(optimizeCheckBox.isSelected() ? 1 : 0);
+                area.setText(text);
+            });
+            setLayout(new MigLayout("ins panel,wrap", "[grow,fill][grow,fill]", "[grow,fill][]"));
+            add(new JScrollPane(area), "span");
+            add(disassembleButton);
+            add(decompileButton);
+            add(optimizeCheckBox, "skip");
+
         }
 
         @NotNull
@@ -137,13 +157,5 @@ public class ShaderViewerPanel extends JComponent {
                 throw new IllegalStateException("Error: %#10x".formatted(rc));
             }
         }
-    }
-
-    private interface DXCompiler extends CloseableLibrary {
-        int DxcCreateInstance(GUID rclsid, GUID riid, PointerByReference ppv);
-    }
-
-    private interface D3DCompiler extends CloseableLibrary {
-        int D3DDisassemble(byte[] srcBuf, int srcLen, int flags, String comments, PointerByReference disassembly);
     }
 }

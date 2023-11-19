@@ -18,6 +18,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -531,6 +532,30 @@ public final class IOUtils {
                 return result;
             }
         }
+    }
+
+    @NotNull
+    public static <E extends Enum<E> & EnumValue> E getEnum(@NotNull Class<E> cls, int value) {
+        for (E constant : cls.getEnumConstants()) {
+            if (constant.value() == value) {
+                return constant;
+            }
+        }
+
+        throw new IllegalArgumentException("Cannot convert value " + value + " into enum of type " + cls.getName());
+    }
+
+    @NotNull
+    public static <E extends Enum<E> & EnumSetValue> EnumSet<E> getEnumSet(@NotNull Class<E> cls, int mask) {
+        final EnumSet<E> set = EnumSet.noneOf(cls);
+
+        for (E constant : cls.getEnumConstants()) {
+            if ((constant.value() & mask) > 0) {
+                set.add(constant);
+            }
+        }
+
+        return set;
     }
 
     public interface ThrowableSupplier<T, E extends Throwable> {
