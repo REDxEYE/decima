@@ -75,7 +75,7 @@ public class OperandToken0 {
     public String toString() {
         String op = switch (operandType) {
             case NULL, IMMEDIATE32 -> operandData.toString();
-            case TEMP, INPUT, OUTPUT -> "%s%s%s".formatted(operandData, indices[0], componentSelection);
+            case TEMP, INPUT, OUTPUT -> "%s%s.%s".formatted(operandData, indices[0], componentSelection);
             case SAMPLER -> "%s%s[%s:%s]".formatted(operandData, indices[0], indices[1], indices[1]);
             case RESOURCE -> "%s%s[%s]%s".formatted(operandData, indices[0], indices[1], componentSelection);
             case CONSTANT_BUFFER ->

@@ -87,35 +87,35 @@ public class ShaderDecompiler {
                 case Commentary commentary -> {
                     needNewLine = true;
                 }
-                case Statement statement && statement.template.contains("{") -> {
+                case Statement statement when statement.template.contains("{") -> {
                     ident++;
                     if (needIndent)
                         addIdent(ident, ss);
                     ss.append(' ');
                     needNewLine = true;
                 }
-                case Statement statement && statement.template.contains("}") -> {
+                case Statement statement when statement.template.contains("}") -> {
                     ident--;
                     if (needIndent)
                         addIdent(ident, ss);
                     needNewLine = !(elements.get(i + 1) instanceof Statement s) || !s.template.contains("else");
                 }
-                case Expression statement && statement.template.contains("if") -> {
+                case Expression statement when statement.template.contains("if") -> {
                     addIdent(ident, ss);
                     needNewLine = false;
                     needIndent = false;
                 }
-                case Statement statement && statement.template.contains("loop") -> {
+                case Statement statement when statement.template.contains("loop") -> {
                     addIdent(ident, ss);
                     needNewLine = false;
                     needIndent = false;
                 }
-                case Statement statement && statement.template.contains("else") -> {
+                case Statement statement when statement.template.contains("else") -> {
                     addIdent(ident, ss);
                     needNewLine = false;
                     needIndent = false;
                 }
-                case default -> {
+                default -> {
                     addIdent(ident, ss);
                     needNewLine = true;
                     needIndent = true;

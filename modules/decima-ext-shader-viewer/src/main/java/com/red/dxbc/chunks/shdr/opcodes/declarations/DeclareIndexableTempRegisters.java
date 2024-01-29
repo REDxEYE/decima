@@ -30,7 +30,7 @@ public final class DeclareIndexableTempRegisters extends Opcode {
     @Override
     public List<Element> toExpressions(@NotNull DXBC shader) {
         return List.of(
-            new VariableArrayDeclaration("float%d".formatted(componentCount), "x%d".formatted(index), componentCount)
+            new VariableArrayDeclaration("float%d".formatted(componentCount), "x%d".formatted(index), length)
         );
     }
 }

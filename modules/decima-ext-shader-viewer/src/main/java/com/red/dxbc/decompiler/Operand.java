@@ -1,6 +1,7 @@
 package com.red.dxbc.decompiler;
 
 import com.red.dxbc.chunks.shdr.enums.ComponentName;
+import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 import java.util.List;
@@ -10,12 +11,12 @@ public class Operand implements Element {
     public final String name;
     public List<ComponentName> components;
 
-    public Operand(String name) {
+    public Operand(@NotNull String name) {
         this.name = name;
         components = null;
     }
 
-    public Operand(String name, @Nullable List<ComponentName> components) {
+    public Operand(@NotNull String name, @Nullable List<ComponentName> components) {
         this.name = name;
         this.components = components;
     }

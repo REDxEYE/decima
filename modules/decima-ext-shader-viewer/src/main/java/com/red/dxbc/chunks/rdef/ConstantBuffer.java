@@ -71,7 +71,7 @@ public class ConstantBuffer {
             start += variable.size;
         }
 
-        return null;
+        return "failed to fetch CB";
     }
 
 }
