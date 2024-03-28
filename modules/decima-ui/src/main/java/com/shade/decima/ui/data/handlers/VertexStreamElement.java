@@ -1,8 +1,8 @@
 package com.shade.decima.ui.data.handlers;
 
 import com.shade.decima.model.rtti.RTTIType;
-import com.shade.decima.model.rtti.messages.ds.DSVertexArrayResourceHandler.HwVertexStreamElement;
 import com.shade.decima.model.rtti.objects.RTTIObject;
+import com.shade.decima.model.rtti.types.base.BaseVertexStreamElement;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Selector;
 import com.shade.decima.ui.data.registry.ValueHandlerRegistration.Type;
@@ -11,14 +11,14 @@ import com.shade.util.NotNull;
 import com.shade.util.Nullable;
 
 @ValueHandlerRegistration(id = "vertexStreamElement", name = "Vertex Stream Element", value = {
-    @Selector(type = @Type(type = HwVertexStreamElement.class)),
+    @Selector(type = @Type(type = BaseVertexStreamElement.class)),
 })
 public class VertexStreamElement extends ObjectValueHandler {
     @Nullable
     @Override
     public Decorator getDecorator(@NotNull RTTIType<?> type) {
         return (value, component) -> {
-            final HwVertexStreamElement element = ((RTTIObject) value).cast();
+            final BaseVertexStreamElement element = ((RTTIObject) value).cast();
 
             component.append(element.storageType.toString(), TextAttributes.REGULAR_ATTRIBUTES);
             component.append(" ", TextAttributes.REGULAR_ATTRIBUTES);

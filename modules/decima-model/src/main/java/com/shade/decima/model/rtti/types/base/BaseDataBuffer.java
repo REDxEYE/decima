@@ -1,9 +1,10 @@
-package com.shade.decima.model.rtti.types.ds;
+package com.shade.decima.model.rtti.types.base;
 
 import com.shade.decima.model.rtti.Type;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.registry.RTTITypeRegistry;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
+import com.shade.decima.model.rtti.types.ds.DSDataSource;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.model.rtti.types.java.RTTIField;
 import com.shade.platform.model.util.BufferUtils;
@@ -11,7 +12,7 @@ import com.shade.util.NotNull;
 
 import java.nio.ByteBuffer;
 
-public class DSDataBuffer {
+public class BaseDataBuffer{
     @RTTIField(type = @Type(name = "uint32"))
     public int count;
     @RTTIField(type = @Type(name = "ERenderDataStreamingMode"))
@@ -29,7 +30,7 @@ public class DSDataBuffer {
 
     @NotNull
     public static RTTIObject read(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {
-        final var object = new DSDataBuffer();
+        final var object = new BaseDataBuffer();
         object.count = buffer.getInt();
         object.mode = registry.<RTTITypeEnum>find("ERenderDataStreamingMode").valueOf(buffer.getInt());
         object.flags = buffer.getInt();
@@ -42,7 +43,7 @@ public class DSDataBuffer {
             default -> throw new IllegalStateException("Unsupported buffer mode: " + object.mode);
         }
 
-        return new RTTIObject(registry.find(DSDataBuffer.class), object);
+        return new RTTIObject(registry.find(BaseDataBuffer.class), object);
     }
 
     public void write(@NotNull RTTITypeRegistry registry, @NotNull ByteBuffer buffer) {

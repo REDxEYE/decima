@@ -8,15 +8,17 @@ import com.shade.decima.model.base.GameType;
 import com.shade.decima.model.rtti.RTTICoreFile;
 import com.shade.decima.model.rtti.RTTIUtils;
 import com.shade.decima.model.rtti.messages.ds.DSIndexArrayResourceHandler;
-import com.shade.decima.model.rtti.messages.ds.DSVertexArrayResourceHandler;
 import com.shade.decima.model.rtti.messages.hzd.HZDIndexArrayResourceHandler;
-import com.shade.decima.model.rtti.messages.hzd.HZDVertexArrayResourceHandler;
-import com.shade.decima.model.rtti.messages.shared.VertexStream;
+import com.shade.decima.model.rtti.types.base.BaseVertexStream;
 import com.shade.decima.model.rtti.objects.RTTIObject;
 import com.shade.decima.model.rtti.objects.RTTIReference;
 import com.shade.decima.model.rtti.types.RTTITypeEnum;
 import com.shade.decima.model.rtti.types.ds.DSDataSource;
+import com.shade.decima.model.rtti.types.ds.DSVertexArray;
+import com.shade.decima.model.rtti.types.ds.DSVertexStream;
 import com.shade.decima.model.rtti.types.hzd.HZDDataSource;
+import com.shade.decima.model.rtti.types.hzd.HZDVertexArray;
+import com.shade.decima.model.rtti.types.hzd.HZDVertexStream;
 import com.shade.decima.model.rtti.types.java.HwDataSource;
 import com.shade.decima.ui.data.handlers.PackingInfoHandler;
 import com.shade.decima.ui.data.viewer.model.BaseModelExporter;
@@ -25,10 +27,6 @@ import com.shade.decima.ui.data.viewer.model.ModelExporterProvider;
 import com.shade.decima.ui.data.viewer.model.dmf.data.*;
 import com.shade.decima.ui.data.viewer.model.dmf.nodes.*;
 import com.shade.decima.ui.data.viewer.model.dmf.serializers.*;
-import com.shade.decima.ui.data.viewer.model.utils.Matrix4x4;
-import com.shade.decima.ui.data.viewer.model.utils.Quaternion;
-import com.shade.decima.ui.data.viewer.model.utils.Transform;
-import com.shade.decima.ui.data.viewer.model.utils.Vector3;
 import com.shade.decima.ui.data.viewer.texture.TextureViewer;
 import com.shade.decima.ui.data.viewer.texture.controls.ImageProvider;
 import com.shade.decima.ui.data.viewer.texture.exporter.TextureExporterPNG;
@@ -38,10 +36,7 @@ import com.shade.platform.model.util.IOUtils;
 import com.shade.platform.model.util.MathUtils;
 import com.shade.util.NotNull;
 import com.shade.util.Nullable;
-import org.joml.Vector2i;
-import org.joml.Vector2ic;
-import org.joml.Vector3f;
-import org.joml.Vector3fc;
+import org.joml.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +53,31 @@ import java.util.List;
 import java.util.*;
 
 public class DMFExporter extends BaseModelExporter implements ModelExporter {
+    public static class Provider implements ModelExporterProvider {
+        @NotNull
+        @Override
+        public ModelExporter create(@NotNull Project project, @NotNull Set<Option> options, @NotNull Path outputPath) {
+            return new DMFExporter(project, options, outputPath);
+        }
+
+        @Override
+        public boolean supportsOption(@NotNull Option option) {
+            return true;
+        }
+
+        @NotNull
+        @Override
+        public String getExtension() {
+            return "dmf";
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+            return "DMF Scene";
+        }
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DMFExporter.class);
     private static final Map<String, String> SEMANTICS_REMAP = Map.ofEntries(
         Map.entry("Pos", "POSITION"),
@@ -272,7 +292,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final RTTIObject vertexArrayObj = Objects.requireNonNull(shadingPassSetup.ref("VertexArray").get(project, file));
             final RTTIReference[] indexArrays = shadingPassSetup.get("IndexArrays");
             final RTTIObject indexArrayObj = Objects.requireNonNull(indexArrays[0].get(project, file));
-            final HZDVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+            final HZDVertexArray vertices = vertexArrayObj.obj("Data").cast();
             final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
             final DMFPrimitive primitive = new DMFPrimitive(0, vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
@@ -281,7 +301,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             mesh.primitives.add(primitive);
             int vertexStreamOffset = -1;
             for (RTTIObject streamObj : vertices.streams) {
-                HZDVertexArrayResourceHandler.HwVertexStream stream = streamObj.cast();
+                HZDVertexStream stream = streamObj.cast();
                 final int stride = stream.stride;
 
                 final DMFBuffer buffer;
@@ -349,7 +369,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
         }
     }
 
-    private void convertVertexAttributes(int vertexCount, int dataSourceOffset, DMFPrimitive primitive, VertexStream stream, int stride, DMFBuffer buffer) {
+    private void convertVertexAttributes(int vertexCount, int dataSourceOffset, DMFPrimitive primitive, BaseVertexStream stream, int stride, DMFBuffer buffer) {
         final DMFBufferView bufferView = new DMFBufferView(scene.buffers.indexOf(buffer), dataSourceOffset, stride * vertexCount);
 
         final RTTIObject[] elements = stream.elements();
@@ -1127,7 +1147,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject shadingGroupObj = Objects.requireNonNull(shadingGroupRef.get(project, file));
                 final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.file()));
                 final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.file()));
-                final HZDVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+                final HZDVertexArray vertices = vertexArrayObj.obj("Data").cast();
                 final HZDIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
                 final DMFPrimitive primitive = new DMFPrimitive(i, vertices.vertexCount, DMFVertexBufferType.SINGLE_BUFFER, 0, vertices.vertexCount,
@@ -1136,7 +1156,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 mesh.primitives.add(primitive);
                 int vertexStreamOffset = -1;
                 for (RTTIObject streamObj : vertices.streams) {
-                    HZDVertexArrayResourceHandler.HwVertexStream stream = streamObj.cast();
+                    HZDVertexStream stream = streamObj.cast();
                     final int stride = stream.stride;
 
                     final DMFBuffer buffer;
@@ -1206,7 +1226,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
             final RTTIObject primitiveObj = primitiveRes.object();
             final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.file()));
             final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.file()));
-            final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+            final DSVertexArray vertices = vertexArrayObj.obj("Data").cast();
             final DSIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
             final RTTIObject vertexArrayUUID = vertexArrayObj.uuid();
@@ -1232,7 +1252,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 final RTTIObject shadingGroupObj = Objects.requireNonNull(shadingGroupRef.follow(project, file)).object();
                 final RTTIObject vertexArrayObj = Objects.requireNonNull(primitiveObj.ref("VertexArray").get(project, primitiveRes.file()));
                 final RTTIObject indexArrayObj = Objects.requireNonNull(primitiveObj.ref("IndexArray").get(project, primitiveRes.file()));
-                final DSVertexArrayResourceHandler.HwVertexArray vertices = vertexArrayObj.obj("Data").cast();
+                final DSVertexArray vertices = vertexArrayObj.obj("Data").cast();
                 final DSIndexArrayResourceHandler.HwIndexArray indices = indexArrayObj.obj("Data").cast();
 
                 Map.Entry<Integer, Integer> offsetAndGroupId = bufferOffsets.get(vertexArrayObj.uuid());
@@ -1244,7 +1264,7 @@ public class DMFExporter extends BaseModelExporter implements ModelExporter {
                 mesh.primitives.add(primitive);
 
                 for (RTTIObject streamObj : vertices.streams) {
-                    DSVertexArrayResourceHandler.HwVertexStream stream = streamObj.cast();
+                    DSVertexStream stream = streamObj.cast();
                     convertVertexAttributes(vertices.vertexCount, dataSourceOffset, primitive, stream, stream.stride, buffer);
                     dataSourceOffset += MathUtils.alignUp(stream.stride * vertices.vertexCount, 256);
                 }
